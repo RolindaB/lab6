@@ -1,0 +1,250 @@
+/* USER CODE BEGIN Header */
+/**
+  **************************
+  * @file           : main.c
+  * @brief          : Cuerpo principal del programa
+  **************************
+  * @attention
+  *
+  * Copyright (c) 2024 STMicroelectronics.
+  * Todos los derechos reservados.
+  *
+  * Este software está licenciado bajo los términos que se pueden encontrar en el archivo LICENSE
+  * en el directorio raíz de este componente de software.
+  * Si no se proporciona ningún archivo LICENSE con este software, se proporciona TAL CUAL.
+  *
+  **************************
+  */
+/* USER CODE END Header */
+
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+
+/* Private includes ----------------------------------------------------------*/
+#include <string.h>
+
+/* Private define ------------------------------------------------------------*/
+#define BUFFER_SIZE 1 // Definir el tamaño del buffer de recepción
+
+/* Private variables ---------------------------------------------------------*/
+UART_HandleTypeDef huart1; // Manejo de UART1
+UART_HandleTypeDef huart2; // Manejo de UART2
+uint8_t bufferRecepcion[BUFFER_SIZE]; // Buffer para recepción de datos
+uint8_t indiceRecepcion = 0; // Índice para seguimiento de la recepción
+
+/* Prototipos de funciones privadas ------------------------------------------*/
+void SystemClock_Config(void); // Configuración del reloj del sistema
+static void MX_GPIO_Init(void); // Inicialización de GPIO
+static void MX_USART1_UART_Init(void); // Inicialización de USART1
+static void MX_USART2_UART_Init(void); // Inicialización de USART2
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart); // Callback para recepción UART
+
+/* USER CODE BEGIN 0 */
+
+/* USER CODE END 0 */
+
+/**
+  * @brief  El punto de entrada de la aplicación.
+  * @retval int
+  */
+int main(void)
+{
+    /* USER CODE BEGIN 1 */
+
+    /* USER CODE END 1 */
+
+    /* Configuración del MCU---------------------------------------------------*/
+    HAL_Init(); // Inicializar la biblioteca HAL
+    SystemClock_Config(); // Configurar el reloj del sistema
+    MX_GPIO_Init(); // Inicializar GPIO
+    MX_USART1_UART_Init(); // Inicializar UART1
+    MX_USART2_UART_Init(); // Inicializar UART2
+
+    /* USER CODE BEGIN 2 */
+    char mensaje[] = "Bienvenido\n"; // Mensaje de bienvenida
+    HAL_UART_Transmit(&huart2, (uint8_t *)mensaje, strlen(mensaje), 10); // Transmitir mensaje a UART2
+    // Iniciar la recepción de datos por interrupción en UART1
+    HAL_UART_Receive_IT(&huart1, &bufferRecepcion[indiceRecepcion], 1);
+    /* USER CODE END 2 */
+
+    /* Bucle infinito */
+    while (1)
+    {
+        /* USER CODE BEGIN WHILE */
+
+        /* USER CODE END WHILE */
+    }
+    /* USER CODE BEGIN 3 */
+    /* USER CODE END 3 */
+}
+
+/**
+  * @brief Configuración del reloj del sistema
+  * @retval Ninguno
+  */
+void SystemClock_Config(void)
+{
+    RCC_OscInitTypeDef RCC_OscInitStruct = {0}; // Estructura para configuración de oscilador
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0}; // Estructura para configuración de reloj
+
+    /* Configurar el voltaje de salida del regulador interno */
+    __HAL_RCC_PWR_CLK_ENABLE(); // Habilitar el reloj para PWR
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3); // Escalar el voltaje
+
+    /* Inicializar los osciladores RCC según los parámetros especificados */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI; // Tipo de oscilador HSI
+    RCC_OscInitStruct.HSIState = RCC_HSI_ON; // Activar HSI
+    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT; // Valor de calibración por defecto
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE; // Deshabilitar PLL
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) // Verificar configuración de oscilador
+    {
+        Error_Handler(); // Manejar error
+    }
+
+    /* Inicializar la CPU, buses AHB y APB */
+    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+                                  | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2; // Configurar tipos de reloj
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI; // Fuente de SYSCLK
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1; // Divisor de reloj AHB
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1; // Divisor de reloj APB1
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1; // Divisor de reloj APB2
+
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK) // Verificar configuración de reloj
+    {
+        Error_Handler(); // Manejar error
+    }
+}
+
+/**
+  * @brief Función de Inicialización USART1
+  * @param Ninguno
+  * @retval Ninguno
+  */
+static void MX_USART1_UART_Init(void)
+{
+    huart1.Instance = USART1; // Asignar instancia de USART1
+    huart1.Init.BaudRate = 9600; // Configurar velocidad en baudios
+    huart1.Init.WordLength = UART_WORDLENGTH_8B; // Longitud de palabra
+    huart1.Init.StopBits = UART_STOPBITS_1; // Bits de parada
+    huart1.Init.Parity = UART_PARITY_NONE; // Paridad
+    huart1.Init.Mode = UART_MODE_TX_RX; // Modo de transmisión y recepción
+    huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE; // Control de flujo
+    huart1.Init.OverSampling = UART_OVERSAMPLING_16; // Sobremuestreo
+    if (HAL_UART_Init(&huart1) != HAL_OK) // Verificar inicialización de UART1
+    {
+        Error_Handler(); // Manejar error
+    }
+}
+
+/**
+  * @brief Función de Inicialización USART2
+  * @param Ninguno
+  * @retval Ninguno
+  */
+static void MX_USART2_UART_Init(void)
+{
+    huart2.Instance = USART2; // Asignar instancia de USART2
+    huart2.Init.BaudRate = 9600; // Configurar velocidad en baudios
+    huart2.Init.WordLength = UART_WORDLENGTH_8B; // Longitud de palabra
+    huart2.Init.StopBits = UART_STOPBITS_1; // Bits de parada
+    huart2.Init.Parity = UART_PARITY_NONE; // Paridad
+    huart2.Init.Mode = UART_MODE_TX_RX; // Modo de transmisión y recepción
+    huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE; // Control de flujo
+    huart2.Init.OverSampling = UART_OVERSAMPLING_16; // Sobremuestreo
+    if (HAL_UART_Init(&huart2) != HAL_OK) // Verificar inicialización de UART2
+    {
+        Error_Handler(); // Manejar error
+    }
+}
+
+/**
+  * @brief Función de Inicialización GPIO
+  * @param Ninguno
+  * @retval Ninguno
+  */
+static void MX_GPIO_Init(void)
+{
+    /* USER CODE BEGIN MX_GPIO_Init_1 */
+    /* USER CODE END MX_GPIO_Init_1 */
+
+    /* Habilitar el reloj para los puertos GPIO */
+    __HAL_RCC_GPIOH_CLK_ENABLE(); // Habilitar GPIOH
+    __HAL_RCC_GPIOA_CLK_ENABLE(); // Habilitar GPIOA
+    /* USER CODE BEGIN MX_GPIO_Init_2 */
+    /* USER CODE END MX_GPIO_Init_2 */
+}
+
+/* USER CODE BEGIN 4 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1) // Verificar si la interrupción proviene de USART1
+    {
+    	// Mostrar en consola el dato recibido
+    	   HAL_UART_Transmit(&huart2, &bufferRecepcion[indiceRecepcion], 1, HAL_MAX_DELAY); // Transmitir el dato recibido a UART2
+        // Procesar el dato recibido
+        switch (bufferRecepcion[indiceRecepcion]) // Evaluar el carácter recibido
+        {
+            case '1':
+                HAL_UART_Transmit(&huart2, (uint8_t *)"izquierda\n", strlen("izquierda\n"), HAL_MAX_DELAY); // Transmitir "izquierda"
+                break;
+            case '2':
+                HAL_UART_Transmit(&huart2, (uint8_t *)"abajo\n", strlen("abajo\n"), HAL_MAX_DELAY); // Transmitir "abajo"
+                break;
+            case '3':
+                HAL_UART_Transmit(&huart2, (uint8_t *)"derecha\n", strlen("derecha\n"), HAL_MAX_DELAY); // Transmitir "derecha"
+                break;
+            case '4':
+                HAL_UART_Transmit(&huart2, (uint8_t *)"arriba\n", strlen("arriba\n"), HAL_MAX_DELAY); // Transmitir "arriba"
+                break;
+            case 'A':
+                HAL_UART_Transmit(&huart2, (uint8_t *)"Coches\n", strlen("Coches\n"), HAL_MAX_DELAY); // Transmitir "Coches"
+                break;
+            case 'B':
+                HAL_UART_Transmit(&huart2, (uint8_t *)"Barcos\n", strlen("Barcos\n"), HAL_MAX_DELAY); // Transmitir "Barcos"
+                break;
+            case 'C':
+                HAL_UART_Transmit(&huart2, (uint8_t *)"Aviones\n", strlen("Aviones\n"), HAL_MAX_DELAY); // Transmitir "Aviones"
+                break;
+            case 'D':
+                HAL_UART_Transmit(&huart2, (uint8_t *)"Otros\n", strlen("Otros\n"), HAL_MAX_DELAY); // Transmitir "Otros"
+                break;
+            default:
+                break; // Ignorar caracteres no reconocidos
+        }
+        indiceRecepcion++; // Incrementar el índice de recepción
+        // Reiniciar la recepción
+        HAL_UART_Receive_IT(&huart1, &bufferRecepcion[indiceRecepcion], 1);
+    }
+}
+/* USER CODE END 4 */
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
+void Error_Handler(void)
+{
+    /* USER CODE BEGIN Error_Handler_Debug */
+    /* User can add his own implementation to report the HAL error return state */
+    __disable_irq();
+    while (1)
+    {
+    }
+    /* USER CODE END Error_Handler_Debug */
+}
+
+#ifdef  USE_FULL_ASSERT
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+    /* USER CODE BEGIN 6 */
+    /* USER CODE END 6 */
+}
+#endif /* USE_FULL_ASSERT */
+
+

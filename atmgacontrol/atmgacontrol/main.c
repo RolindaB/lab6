@@ -17,6 +17,7 @@
 #define BUTTON_RIGHT  PB2  // D10 en Arduino (PB2 en ATmega328P)
 #define BUTTON_A      PB3  // D11 en Arduino (PB3 en ATmega328P)
 #define BUTTON_B      PB4  // D12 en Arduino (PB4 en ATmega328P)
+volatile char receivedChar = 0;    //Variable que almacena el valor del UART
 
 void init_buttons() {
 	// Configurar los pines como entradas con pull-up
@@ -32,33 +33,33 @@ void check_buttons() {
 	// Comprobar si algún botón está presionado
 	if (!(PIND & (1 << BUTTON_UP))) {
 		_delay_ms(200);
-		UART_send('U');
+		writeUART('U');
 	}
 	if (!(PINB & (1 << BUTTON_DOWN))) {
 		_delay_ms(200);
-		UART_send('D');
+		writeUART('D');
 	}
 	if (!(PINB & (1 << BUTTON_LEFT))) {
 		_delay_ms(200);
-		UART_send('L');
+		writeUART('L');
 	}
 	if (!(PINB & (1 << BUTTON_RIGHT))) {
 		_delay_ms(200);
-		UART_send('R');
+		writeUART('R');
 	}
 	if (!(PINB & (1 << BUTTON_A))) {
-		UART_send('A');
+		writeUART('A');
 	}
 	if (!(PINB & (1 << BUTTON_B))) {
 		_delay_ms(200);
-		UART_send('B');
+		writeUART('B');
 	}
 	
 }
 
 
 int main(void) {
-	UART_init(9600);  // Inicializar UART a 9600 baud
+	 initUART9600(); // Inicializar UART a 9600 baud
 	init_buttons();   // Inicializar los botones
 	//sei();
 	while (1) {
@@ -67,4 +68,12 @@ int main(void) {
 		
 	}
 	return 0;
+}
+
+ISR(USART_RX_vect)
+{
+	receivedChar = UDR0; // Almacena el carácter recibido
+	
+	while(!(UCSR0A & (1<<UDRE0)));    //Mientras haya caracteres
+	
 }

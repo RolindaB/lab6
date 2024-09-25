@@ -4,25 +4,42 @@ Finished building target: controlnucleo.elf
 arm-none-eabi-size  controlnucleo.elf 
 arm-none-eabi-objdump -h -S controlnucleo.elf  > "controlnucleo.list"
    text	   data	    bss	    dec	    hex	filename
-   8944	     12	   1644	  10600	   2968	controlnucleo.elf
+  11836	     12	   1740	  13588	   3514	controlnucleo.elf
 Finished building: default.size.stdout
  
 Finished building: controlnucleo.list
  
 
-00:51:53 Build Finished. 0 errors, 0 warnings. (took 2s.344ms)
+23:13:07 Build Finished. 0 errors, 8 warnings. (took 12s.771ms)
 
-00:51:54 **** Incremental Build of configuration Debug for project controlnucleo ****
+23:13:08 **** Incremental Build of configuration Debug for project controlnucleo ****
 make -j16 all 
 arm-none-eabi-size  controlnucleo.elf 
    text	   data	    bss	    dec	    hex	filename
-   8944	     12	   1644	  10600	   2968	controlnucleo.elf
+  11836	     12	   1740	  13588	   3514	controlnucleo.elf
 Finished building: default.size.stdout
  
-00:52:02 **** Incremental Build of configuration Debug for project controlnucleo ****
+
+23:13:08 Build Finished. 0 errors, 0 warnings. (took 347ms)
+
+23:13:09 **** Incremental Build of configuration Debug for project controlnucleo ****
 make -j16 all 
 arm-none-eabi-size  controlnucleo.elf 
    text	   data	    bss	    dec	    hex	filename
-   8944	     12	   1644	  10600	   2968	controlnucleo.elf
+  11836	     12	   1740	  13588	   3514	controlnucleo.elf
+Finished building: default.size.stdout
+ 
+23:13:09 **** Incremental Build of configuration Debug for project controlnucleo ****
+make -j16 all 
+arm-none-eabi-size  controlnucleo.elf 
+   text	   data	    bss	    dec	    hex	filename
+  11836	     12	   1740	  13588	   3514	controlnucleo.elf
+Finished building: default.size.stdout
+ 
+23:14:55 **** Incremental Build of configuration Debug for project controlnucleo ****
+make -j16 all 
+arm-none-eabi-size  controlnucleo.elf 
+   text	   data	    bss	    dec	    hex	filename
+  11836	     12	   1740	  13588	   3514	controlnucleo.elf
 Finished building: default.size.stdout
  

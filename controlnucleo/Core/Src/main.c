@@ -1,19 +1,19 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
+  **************************
   * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
+  * @brief          : Cuerpo principal del programa
+  **************************
   * @attention
   *
   * Copyright (c) 2024 STMicroelectronics.
-  * All rights reserved.
+  * Todos los derechos reservados.
   *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
+  * Este software está licenciado bajo los términos que se pueden encontrar en el archivo LICENSE
+  * en el directorio raíz de este componente de software.
+  * Si no se proporciona ningún archivo LICENSE con este software, se proporciona TAL CUAL.
   *
-  ******************************************************************************
+  **************************
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,16 +40,19 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint8_t buffer[1];
+uint8_t bufferRecepcion[1]; // Buffer para recepción de datos
+uint8_t mensaje[20]; // Buffer para almacenar el mensaje a enviar
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -89,25 +92,22 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t Test[] = "Hola mundo! \r\n";
-  //Función bloque
-  HAL_UART_Transmit(&huart2, Test, sizeof(Test), 100);
+  HAL_UART_Receive_IT(&huart1, bufferRecepcion, 1);
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
-	  if (HAL_UART_Receive(&huart2, buffer, sizeof(buffer), 1000) == HAL_OK) {
-	          if (buffer[0] != '\0') {
-	              HAL_UART_Transmit(&huart2, buffer, sizeof(buffer), 10);
-	          }
-	  }
+    {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+
+    }
   /* USER CODE END 3 */
 }
 
@@ -150,6 +150,39 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 9600;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
 }
 
 /**
@@ -196,6 +229,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
@@ -203,6 +237,44 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1) // Verificar si la interrupción proviene de USART1
+    {
+        // Procesar el dato recibido
+        switch (bufferRecepcion[0]) // Evaluar el carácter recibido
+        {
+            case 'L':
+                strcpy(mensaje, "Izquierda\r\n"); // Copiar mensaje
+                break;
+            case 'D':
+                strcpy(mensaje, "Abajo\r\n"); // Copiar mensaje
+                break;
+            case 'R':
+                strcpy(mensaje, "Derecha\r\n"); // Copiar mensaje
+                break;
+            case 'U':
+                strcpy(mensaje, "Arriba\r\n"); // Copiar mensaje
+                break;
+            case 'A':
+                strcpy(mensaje, "Parar\r\n"); // Copiar mensaje
+                break;
+            case 'B':
+                strcpy(mensaje, "Reiniciar\r\n"); // Copiar mensaje
+                break;
+            default:
+                //strcpy(mensaje, "Comando invalido\n"); // Mensaje de comando inválido
+                break;
+        }
+
+        // Transmitir el mensaje
+        HAL_UART_Transmit(&huart2, mensaje, strlen(mensaje), 10);
+
+        // Reiniciar la recepción de datos
+        HAL_UART_Receive_IT(&huart1, bufferRecepcion, 1);
+    }
+}
+
 
 /* USER CODE END 4 */
 
@@ -213,10 +285,10 @@ static void MX_GPIO_Init(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
   {
+    // Ciclo infinito en caso de error
   }
   /* USER CODE END Error_Handler_Debug */
 }
@@ -232,8 +304,7 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+    // Añadir mensaje de error personalizado si se necesita
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
